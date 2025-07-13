@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<style>
+  html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+  }
+  body {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+  }
+  #tabs {
+    flex-shrink: 0;
+  }
+  #chat-area {
+    flex: 1 1 auto;
+    min-height: 0;
+  }
+  #bottom-bar {
+    flex-shrink: 0;
+  }
+  @media (max-width: 600px) {
+    header {
+      font-size: 18px;
+      padding: 8px;
+    }
+    #tabs {
+      flex-direction: column;
+      font-size: 14px;
+    }
+    #tabs .tab {
+      padding: 10px 8px;
+      font-size: 15px;
+      min-width: 100px;
+      text-align: left;
+    }
+    #chat-area {
+      font-size: 16px;
+      padding: 8px;
+      height: 45vh;
+      min-height: 180px;
+      max-height: 50vh;
+      overflow-y: auto;
+    }
+    #bottom-bar {
+      flex-direction: column;
+      gap: 8px;
+      padding: 8px;
+      align-items: stretch;
+    }
+    #recipient, #message, #send {
+      font-size: 15px;
+      padding: 10px;
+      margin: 0;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    #send {
+      margin-left: 0;
+      margin-top: 4px;
+    }
+  }
+</style>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Messagerie Web</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(135deg, #232526 0%, #414345 100%);
+      color: rgb(255, 0, 0);
+      margin: 0;
+      padding: 0;
+    }
+    header {
+      background: #00ff2f;
+      padding: 10px;
+      text-align: center;
+      font-size: 24px;
+    }
+    #tabs {
+      display: flex;
+      background: #000000;
+      border-bottom: 2px solid #444;
+      overflow-x: auto;
+    }
+    .tab {
+      padding: 10px 30px;
+      cursor: pointer;
+      border-right: 1px solid #444;
+      white-space: nowrap;
+    }
+    .tab.active {
+      background: #444;
+      font-weight: bold;
+    }
+    #chat-area {
+      height: 500px;
+      overflow-y: scroll;
+      padding: 10px;
+      background: #111;
+      font-size: 18px;
+    }
+    #bottom-bar {
+      display: flex;
+      padding: 10px;
+      background: #222;
+    }
+    #recipient {
+      font-size: 16px;
+      margin-right: 10px;
+    }
+    #message {
+      flex: 1;
+      font-size: 16px;
+      padding: 10px;
+    }
+    #send {
+      padding: 10px 20px;
+      font-size: 16px;
+      margin-left: 10px;
+    }
+  </style>
+</head>
+<body>
+
+<header>Messagerie</header>
+<div id="tabs"></div>
+<div id="chat-area"></div>
+
+<div id="bottom-bar">
+  <select id="recipient">
+    <option value="ALL">Général</option>
+  </select>
+  <input id="message" placeholder="Tapez votre message..." />
+  <button id="send">Envoyer</button>
+</div>
+
+<script>
+  let pseudo = prompt("Entrez votre pseudo :") || "jeviensdemechierdessus";
+  const ws = new WebSocket("ws://" + location.hostname + ":8080");
+  const tabs = {};
+  let currentTab = "ALL";
+  const displayed = new Set();
+
+  const recipientSelect = document.getElementById("recipient");
+  const messageInput = document.getElementById("message");
+  const sendBtn = document.getElementById("send");
+  const tabsDiv = document.getElementById("tabs");
+  const chatArea = document.getElementById("chat-area");
+
+  ws.onopen = () => {
+    ws.send(pseudo + "\n");
+  };
+
+  ws.onmessage = (event) => {
+    const lines = event.data.split('\n');
+    for (let line of lines) {
+      if (!line.trim()) continue;
+      let obj;
+      try {
+        obj = JSON.parse(line);
+      } catch { continue; }
+
+      if (obj.type === 'msg') {
+        const timestamp = obj.timestamp || new Date().toLocaleTimeString();
+        const sender = obj.from;
+        const target = obj.to;
+        const msg = obj.msg;
+        const uid = `${timestamp}_${sender}_${target}_${msg}`;
+        if (displayed.has(uid)) return;
+        displayed.add(uid);
+        const tab = target === 'ALL' ? 'ALL' : (sender === pseudo ? target : sender);
+        addMessage(tab, `[${timestamp}] ${sender} ➜ ${target === 'ALL' ? 'Tous' : target} : ${msg}`);
+      }
+
+      else if (obj.type === 'users') {
+        updateUsers(obj.data);
+      }
+
+      else if (obj.type === 'history') {
+        for (let msg of obj.data) {
+          const timestamp = msg.timestamp || '';
+          const sender = msg.from;
+          const target = msg.to;
+          const content = msg.msg;
+          const uid = `${timestamp}_${sender}_${target}_${content}`;
+          if (displayed.has(uid)) continue;
+          displayed.add(uid);
+          // Ne montrer que si ça me concerne
+      if (target === 'ALL' || sender === pseudo || target === pseudo) {
+      const tab = target === 'ALL' ? 'ALL' : (sender === pseudo ? target : sender);
+      addMessage(tab, `[${timestamp}] ${sender} ➜ ${target === 'ALL' ? 'Tous' : target} : ${content}`);
+          }
+
+        }
+      }
+
+      else if (obj.type === 'error') {
+        alert("Erreur : " + obj.msg);
+      }
+    }
+  };
+
+  function addMessage(tab, text) {
+    if (!tabs[tab]) {
+      const div = document.createElement("div");
+      div.className = "tab";
+      div.textContent = tab === 'ALL' ? "Général" : `🔒 ${tab}`;
+      div.onclick = () => switchTab(tab);
+      tabsDiv.appendChild(div);
+      tabs[tab] = { div: div, messages: [] };
+    }
+    tabs[tab].messages.push(text);
+    if (currentTab === tab) refreshChat();
+  }
+
+  function switchTab(tab) {
+    currentTab = tab;
+    for (let key in tabs) {
+      tabs[key].div.classList.remove("active");
+    }
+    tabs[tab].div.classList.add("active");
+    refreshChat();
+    recipientSelect.value = tab === 'ALL' ? 'ALL' : tab;
+  }
+
+  function refreshChat() {
+    chatArea.innerHTML = tabs[currentTab].messages.join("<br>");
+    chatArea.scrollTop = chatArea.scrollHeight;
+  }
+
+  function updateUsers(users) {
+    users = users.filter(u => u !== pseudo);
+    const old = [...recipientSelect.options].map(o => o.value);
+    const newList = ['ALL', ...users];
+    if (JSON.stringify(old) !== JSON.stringify(newList)) {
+      recipientSelect.innerHTML = '<option value="ALL">🌐 Général</option>';
+      users.forEach(u => {
+        recipientSelect.innerHTML += `<option value="${u}">${u}</option>`;
+      });
+    }
+  }
+
+  sendBtn.onclick = sendMessage;
+  messageInput.onkeydown = e => {
+    if (e.key === 'Enter') sendMessage();
+  };
+
+  function sendMessage() {
+    const text = messageInput.value.trim();
+    if (!text) return;
+    const to = recipientSelect.value === 'ALL' ? 'ALL' : recipientSelect.value;
+    const obj = { type: 'msg', msg: text, from: pseudo, to: to };
+    ws.send(JSON.stringify(obj));
+    setTimeout(() => { messageInput.value = ''; }, 10);
+  }
+
+  // Onglet général par défaut
+  addMessage("ALL", "Bienvenue dans le salon général !");
+  switchTab("ALL");
+</script>
+
+</body>
+</html>
