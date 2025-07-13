@@ -1,7 +1,7 @@
 const WebSocket = require('ws');
 const net = require('net');
 
-const wss = new WebSocket.Server({ port: 8080, host: '0.0.0.0' }); // <- 🔥 ici
+const wss = new WebSocket.Server({ port: 8080, host: '0.0.0.0' });
 console.log("🌐 Proxy WebSocket dispo sur ws://IP-LOCALE:8080");
 
 wss.on('connection', ws => {

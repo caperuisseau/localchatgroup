@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <style>
   html, body {
     height: 100%;
@@ -262,9 +263,12 @@
     ws.send(JSON.stringify(obj));
     setTimeout(() => { messageInput.value = ''; }, 10);
   }
+  ws.onclose = () => {
+    alert("Connexion perdue. Essayez de rafraîchir la page.");
+  };
 
-  // Onglet général par défaut
-  addMessage("ALL", "Bienvenue dans le salon général !");
+  addMessage("ALL", `Bienvenue ${pseudo} !`);
+  addMessage("ALL", "les messages ne peuvent pas être supprimés ou modifiés.");
   switchTab("ALL");
 </script>
 

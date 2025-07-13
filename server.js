@@ -3,7 +3,7 @@ const fs = require('fs');
 const PORT = 12345;
 const HISTORY_FILE = 'chat_history.json';
 
-let clients = {}; // pseudo -> socket
+let clients = {}; 
 let history = [];
 
 function loadHistory() {

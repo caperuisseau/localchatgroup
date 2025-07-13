@@ -8,7 +8,7 @@ HOST = '0.0.0.0'
 PORT = 12345
 HISTORY_FILE = 'chat_history.json'
 
-clients = {}  # pseudo -> socket
+clients = {}  
 clients_lock = threading.Lock()
 history = []
 
@@ -45,7 +45,7 @@ def broadcast(msg, sender=None, recipient=None):
     }
     with clients_lock:
         history.append(msg_obj)
-        save_history()  # Sauvegarde à chaque nouveau message
+        save_history()  
         for p, sock in clients.items():
             if recipient is None or recipient == p or sender == p:
                 try:
