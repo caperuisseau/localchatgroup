@@ -1,80 +1,12 @@
 <!DOCTYPE html>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<style>
-  html, body {
-    height: 100%;
-    margin: 0;
-    padding: 0;
-  }
-  body {
-    display: flex;
-    flex-direction: column;
-    min-height: 100vh;
-  }
-  #tabs {
-    flex-shrink: 0;
-  }
-  #chat-area {
-    flex: 1 1 auto;
-    min-height: 0;
-  }
-  #bottom-bar {
-    flex-shrink: 0;
-  }
-  @media (max-width: 600px) {
-    body {
-      display: block;
-      min-height: auto;
-    }
-    header {
-      font-size: 18px;
-      padding: 8px;
-    }
-    #tabs {
-      flex-direction: column;
-      font-size: 14px;
-    }
-    #tabs .tab {
-      padding: 10px 8px;
-      font-size: 15px;
-      min-width: 100px;
-      text-align: left;
-    }
-    #chat-area {
-      font-size: 16px;
-      padding: 8px;
-      height: 45vh;
-      min-height: 180px;
-      max-height: 50vh;
-      overflow-y: auto;
-    }
-    #bottom-bar {
-      flex-direction: column;
-      gap: 8px;
-      padding: 8px;
-      align-items: stretch;
-      display: block;
-    }
-    #recipient, #message, #send {
-      font-size: 15px;
-      padding: 10px;
-      margin: 0;
-      width: 100%;
-      box-sizing: border-box;
-    }
-    #send {
-      margin-left: 0;
-      margin-top: 4px;
-    }
-  }
-</style>
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>chat local</title>
   <style>
     body {
-      font-family: 'Segoe UI', sans-serif;
+      font-family: 'Montserrat', 'Segoe UI', sans-serif;
       background: linear-gradient(135deg, #0b87c5 0%, #414345 100%);
       color: rgb(255, 0, 0);
       margin: 0;
@@ -131,6 +63,74 @@
   </style>
 </head>
 <body>
+<!-- Interface de choix du pseudo -->
+<div id="pseudo-modal" style="
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+">
+  <div style="
+    background: #fff3e0;
+    color: #ff3c00;
+    padding: 32px 24px;
+    border-radius: 12px;
+    box-shadow: 0 4px 32px #ff980066;
+    text-align: center;
+    min-width: 280px;
+  ">
+    <h2 style="margin-bottom: 18px;">Choisissez votre pseudo</h2>
+    <input id="pseudo-input" type="text" maxlength="24" placeholder="Entrez votre pseudo" style="
+      font-size: 18px;
+      padding: 10px;
+      border: 1px solid #ff9800;
+      border-radius: 6px;
+      width: 80%;
+      margin-bottom: 18px;
+      color: #ff3c00;
+      background: #fff;
+    " />
+    <br>
+    <button id="pseudo-btn" style="
+      font-size: 17px;
+      padding: 10px 24px;
+      background: linear-gradient(90deg, #ff3c00 0%, #ff9800 100%);
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      box-shadow: 0 2px 8px #ff980066;
+      margin-top: 8px;
+    ">Entrer</button>
+  </div>
+</div>
+<script>
+  // Remplace le prompt par une interface
+  let pseudo = "";
+  document.getElementById("pseudo-btn").onclick = () => {
+    const val = document.getElementById("pseudo-input").value.trim();
+    if (val.length < 2) {
+      document.getElementById("pseudo-input").focus();
+      document.getElementById("pseudo-input").style.borderColor = "#ff3c00";
+      return;
+    }
+    pseudo = val;
+    document.getElementById("pseudo-modal").style.display = "none";
+    startChat();
+  };
+  document.getElementById("pseudo-input").onkeydown = e => {
+    if (e.key === "Enter") document.getElementById("pseudo-btn").click();
+  };
+  function startChat() {
+    // Place ici le code d'initialisation du chat (WebSocket, etc.)
+    window.initChat && window.initChat(pseudo);
+  }
+  // Pour compatibilité avec le script principal
+  window.getPseudo = () => pseudo;
+</script>
 
 <header>Messagerie</header>
 <div id="tabs"></div>
@@ -145,131 +145,131 @@
 </div>
 
 <script>
-  let pseudo = prompt("Entrez votre pseudo :") || "jenesaispaschoisirdepseudo";
-  const ws = new WebSocket("ws://" + location.hostname + ":8080");
-  const tabs = {};
-  let currentTab = "ALL";
-  const displayed = new Set();
+  window.initChat = function(pseudo) {
+    const ws = new WebSocket("ws://" + location.hostname + ":8080");
+    const tabs = {};
+    let currentTab = "ALL";
+    const displayed = new Set();
 
-  const recipientSelect = document.getElementById("recipient");
-  const messageInput = document.getElementById("message");
-  const sendBtn = document.getElementById("send");
-  const tabsDiv = document.getElementById("tabs");
-  const chatArea = document.getElementById("chat-area");
+    const recipientSelect = document.getElementById("recipient");
+    const messageInput = document.getElementById("message");
+    const sendBtn = document.getElementById("send");
+    const tabsDiv = document.getElementById("tabs");
+    const chatArea = document.getElementById("chat-area");
 
-  ws.onopen = () => {
-    ws.send(pseudo + "\n");
-  };
+    ws.onopen = () => {
+      ws.send(pseudo + "\n");
+    };
 
-  ws.onmessage = (event) => {
-    const lines = event.data.split('\n');
-    for (let line of lines) {
-      if (!line.trim()) continue;
-      let obj;
-      try {
-        obj = JSON.parse(line);
-      } catch { continue; }
+    ws.onmessage = (event) => {
+      const lines = event.data.split('\n');
+      for (let line of lines) {
+        if (!line.trim()) continue;
+        let obj;
+        try {
+          obj = JSON.parse(line);
+        } catch { continue; }
 
-      if (obj.type === 'msg') {
-        const timestamp = obj.timestamp || new Date().toLocaleTimeString();
-        const sender = obj.from;
-        const target = obj.to;
-        const msg = obj.msg;
-        const uid = `${timestamp}_${sender}_${target}_${msg}`;
-        if (displayed.has(uid)) return;
-        displayed.add(uid);
-        const tab = target === 'ALL' ? 'ALL' : (sender === pseudo ? target : sender);
-        addMessage(tab, `[${timestamp}] ${sender} ➜ ${target === 'ALL' ? 'Tous' : target} : ${msg}`);
-      }
-
-      else if (obj.type === 'users') {
-        updateUsers(obj.data);
-      }
-
-      else if (obj.type === 'history') {
-        for (let msg of obj.data) {
-          const timestamp = msg.timestamp || '';
-          const sender = msg.from;
-          const target = msg.to;
-          const content = msg.msg;
-          const uid = `${timestamp}_${sender}_${target}_${content}`;
-          if (displayed.has(uid)) continue;
+        if (obj.type === 'msg') {
+          const timestamp = obj.timestamp || new Date().toLocaleTimeString();
+          const sender = obj.from;
+          const target = obj.to;
+          const msg = obj.msg;
+          const uid = `${timestamp}_${sender}_${target}_${msg}`;
+          if (displayed.has(uid)) return;
           displayed.add(uid);
-          // Ne montrer que si ça me concerne
-      if (target === 'ALL' || sender === pseudo || target === pseudo) {
-      const tab = target === 'ALL' ? 'ALL' : (sender === pseudo ? target : sender);
-      addMessage(tab, `[${timestamp}] ${sender} ➜ ${target === 'ALL' ? 'Tous' : target} : ${content}`);
-          }
+          const tab = target === 'ALL' ? 'ALL' : (sender === pseudo ? target : sender);
+          addMessage(tab, `[${timestamp}] ${sender} ➜ ${target === 'ALL' ? 'Tous' : target} : ${msg}`);
+        }
 
+        else if (obj.type === 'users') {
+          updateUsers(obj.data);
+        }
+
+        else if (obj.type === 'history') {
+          for (let msg of obj.data) {
+            const timestamp = msg.timestamp || '';
+            const sender = msg.from;
+            const target = msg.to;
+            const content = msg.msg;
+            const uid = `${timestamp}_${sender}_${target}_${content}`;
+            if (displayed.has(uid)) continue;
+            displayed.add(uid);
+            // Ne montrer que si ça me concerne
+            if (target === 'ALL' || sender === pseudo || target === pseudo) {
+              const tab = target === 'ALL' ? 'ALL' : (sender === pseudo ? target : sender);
+              addMessage(tab, `[${timestamp}] ${sender} ➜ ${target === 'ALL' ? 'Tous' : target} : ${content}`);
+            }
+          }
+        }
+
+        else if (obj.type === 'error') {
+          alert("Erreur : " + obj.msg);
         }
       }
+    };
 
-      else if (obj.type === 'error') {
-        alert("Erreur : " + obj.msg);
+    function addMessage(tab, text) {
+      if (!tabs[tab]) {
+        const div = document.createElement("div");
+        div.className = "tab";
+        div.textContent = tab === 'ALL' ? "Général" : `🔒 ${tab}`;
+        div.onclick = () => switchTab(tab);
+        tabsDiv.appendChild(div);
+        tabs[tab] = { div: div, messages: [] };
+      }
+      tabs[tab].messages.push(text);
+      if (currentTab === tab) refreshChat();
+    }
+
+    function switchTab(tab) {
+      currentTab = tab;
+      for (let key in tabs) {
+        tabs[key].div.classList.remove("active");
+      }
+      tabs[tab].div.classList.add("active");
+      refreshChat();
+      recipientSelect.value = tab === 'ALL' ? 'ALL' : tab;
+    }
+
+    function refreshChat() {
+      chatArea.innerHTML = tabs[currentTab].messages.join("<br>");
+      chatArea.scrollTop = chatArea.scrollHeight;
+    }
+
+    function updateUsers(users) {
+      users = users.filter(u => u !== pseudo);
+      const old = [...recipientSelect.options].map(o => o.value);
+      const newList = ['ALL', ...users];
+      if (JSON.stringify(old) !== JSON.stringify(newList)) {
+        recipientSelect.innerHTML = '<option value="ALL">Général</option>';
+        users.forEach(u => {
+          recipientSelect.innerHTML += `<option value="${u}">${u}</option>`;
+        });
       }
     }
-  };
 
-  function addMessage(tab, text) {
-    if (!tabs[tab]) {
-      const div = document.createElement("div");
-      div.className = "tab";
-      div.textContent = tab === 'ALL' ? "Général" : `🔒 ${tab}`;
-      div.onclick = () => switchTab(tab);
-      tabsDiv.appendChild(div);
-      tabs[tab] = { div: div, messages: [] };
+    sendBtn.onclick = sendMessage;
+    messageInput.onkeydown = e => {
+      if (e.key === 'Enter') sendMessage();
+    };
+
+    function sendMessage() {
+      const text = messageInput.value.trim();
+      if (!text) return;
+      const to = recipientSelect.value === 'ALL' ? 'ALL' : recipientSelect.value;
+      const obj = { type: 'msg', msg: text, from: pseudo, to: to };
+      ws.send(JSON.stringify(obj));
+      setTimeout(() => { messageInput.value = ''; }, 10);
     }
-    tabs[tab].messages.push(text);
-    if (currentTab === tab) refreshChat();
-  }
+    ws.onclose = () => {
+      alert("Connexion perdue. Essayez de rafraîchir la page.");
+    };
 
-  function switchTab(tab) {
-    currentTab = tab;
-    for (let key in tabs) {
-      tabs[key].div.classList.remove("active");
-    }
-    tabs[tab].div.classList.add("active");
-    refreshChat();
-    recipientSelect.value = tab === 'ALL' ? 'ALL' : tab;
-  }
-
-  function refreshChat() {
-    chatArea.innerHTML = tabs[currentTab].messages.join("<br>");
-    chatArea.scrollTop = chatArea.scrollHeight;
-  }
-
-  function updateUsers(users) {
-    users = users.filter(u => u !== pseudo);
-    const old = [...recipientSelect.options].map(o => o.value);
-    const newList = ['ALL', ...users];
-    if (JSON.stringify(old) !== JSON.stringify(newList)) {
-      recipientSelect.innerHTML = '<option value="ALL">Général</option>';
-      users.forEach(u => {
-        recipientSelect.innerHTML += `<option value="${u}">${u}</option>`;
-      });
-    }
-  }
-
-  sendBtn.onclick = sendMessage;
-  messageInput.onkeydown = e => {
-    if (e.key === 'Enter') sendMessage();
+    addMessage("ALL", `Bienvenue ${pseudo} !`);
+    addMessage("ALL", "les messages ne peuvent pas être supprimés ou modifiés.");
+    switchTab("ALL");
   };
-
-  function sendMessage() {
-    const text = messageInput.value.trim();
-    if (!text) return;
-    const to = recipientSelect.value === 'ALL' ? 'ALL' : recipientSelect.value;
-    const obj = { type: 'msg', msg: text, from: pseudo, to: to };
-    ws.send(JSON.stringify(obj));
-    setTimeout(() => { messageInput.value = ''; }, 10);
-  }
-  ws.onclose = () => {
-    alert("Connexion perdue. Essayez de rafraîchir la page.");
-  };
-
-  addMessage("ALL", `Bienvenue ${pseudo} !`);
-  addMessage("ALL", "les messages ne peuvent pas être supprimés ou modifiés.");
-  switchTab("ALL");
 </script>
 
 </body>
