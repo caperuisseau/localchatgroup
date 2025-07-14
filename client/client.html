@@ -212,7 +212,6 @@
 </div>
 
 <script>
-
   // Interface pseudo
   let pseudo = "";
   document.getElementById("pseudo-btn").onclick = () => {
@@ -286,7 +285,7 @@
             displayed.add(uid);
             if (target === 'ALL' || sender === pseudo || target === pseudo) {
               const tab = target === 'ALL' ? 'ALL' : (sender === pseudo ? target : sender);
-              addMessage(tab, `[${timestamp}] ${sender} ➜ ${target === 'ALL' ? 'Tous' : target} : ${content}`);
+              addMessage(tab, `[${timestamp}] ${sender} ➜ ${target === 'ALL' ? 'Tous' : target} : ${content}`, timestamp, sender);
             }
           }
         }
@@ -305,18 +304,19 @@
         tabs[tab] = { div: div, messages: [] };
       }
 
-      const messageHTML = document.createElement("div");
-      messageHTML.innerHTML = text;
+      const messageContainer = document.createElement("div");
+      messageContainer.className = "message-container";
+      messageContainer.innerHTML = text;
 
       if (timestamp && sender === pseudo) {
         const deleteBtn = document.createElement("button");
         deleteBtn.className = "delete-btn";
         deleteBtn.textContent = "Supprimer";
         deleteBtn.onclick = () => deleteMessage(timestamp);
-        messageHTML.appendChild(deleteBtn);
+        messageContainer.appendChild(deleteBtn);
       }
 
-      tabs[tab].messages.push(messageHTML.outerHTML);
+      tabs[tab].messages.push(messageContainer.outerHTML);
       if (currentTab === tab) refreshChat();
     }
 
@@ -333,7 +333,7 @@
     }
 
     function refreshChat() {
-      chatArea.innerHTML = tabs[currentTab].messages.join("<br>");
+      chatArea.innerHTML = tabs[currentTab].messages.join("");
       chatArea.scrollTop = chatArea.scrollHeight;
     }
 
@@ -359,7 +359,6 @@
 
     ws.onclose = () => alert("Connexion perdue. Rafraîchissez la page.");
     addMessage("ALL", `Bienvenue ${pseudo} !`);
-    addMessage("ALL", "Les messages ne peuvent pas être supprimés ou modifiés.");
     switchTab("ALL");
   }
 </script>
