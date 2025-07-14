@@ -249,7 +249,7 @@
   };
 
   function startChat() {
-    const ws = new WebSocket((location.protocol === "https:" ? "wss://" : "ws://") + location.hostname + ":8080");
+    const ws = new WebSocket("ws://" + location.hostname + ":12345");
     const tabs = {};
     let currentTab = "ALL";
     const displayed = new Set();
@@ -283,25 +283,9 @@
           addMessage(tab, `[${timestamp}] ${sender} ➜ ${target === 'ALL' ? 'Tous' : target} : ${msg}`, timestamp, sender);
         }
 
-        else if (obj.type === 'users') updateUsers(obj.data);
-
-        else if (obj.type === 'history') {
-          for (let msg of obj.data) {
-            const timestamp = msg.timestamp || '';
-            const sender = msg.from;
-            const target = msg.to;
-            const content = msg.msg;
-            const uid = `${timestamp}_${sender}_${target}_${content}`;
-            if (displayed.has(uid)) continue;
-            displayed.add(uid);
-            if (target === 'ALL' || sender === pseudo || target === pseudo) {
-              const tab = target === 'ALL' ? 'ALL' : (sender === pseudo ? target : sender);
-              addMessage(tab, `[${timestamp}] ${sender} ➜ ${target === 'ALL' ? 'Tous' : target} : ${content}`);
-            }
-          }
+        else if (obj.type === 'delete') {
+          removeMessage(obj.timestamp, obj.from);
         }
-
-        else if (obj.type === 'error') alert("Erreur : " + obj.msg);
       }
     };
 
@@ -324,7 +308,6 @@
         ` : ''}
       `;
 
-      // Gestion du bouton "Supprimer"
       messageDiv.querySelectorAll(".delete-btn").forEach(btn => {
         btn.onclick = () => {
           if (confirm("Voulez-vous vraiment supprimer ce message ?")) {
@@ -335,6 +318,19 @@
 
       tabs[tab].messages.push(messageDiv);
       if (currentTab === tab) refreshChat();
+    }
+
+    function removeMessage(timestamp, sender) {
+      for (let tab in tabs) {
+        tabs[tab].messages = tabs[tab].messages.filter(msgDiv => {
+          const btn = msgDiv.querySelector(".delete-btn");
+          if (btn && btn.dataset.timestamp === timestamp && sender === pseudo) {
+            return false;
+          }
+          return true;
+        });
+      }
+      refreshChat();
     }
 
     function switchTab(tab) {
@@ -349,12 +345,6 @@
       chatArea.innerHTML = '';
       tabs[currentTab].messages.forEach(msgDiv => chatArea.appendChild(msgDiv));
       chatArea.scrollTop = chatArea.scrollHeight;
-    }
-
-    function updateUsers(users) {
-      users = users.filter(u => u !== pseudo);
-      recipientSelect.innerHTML = '<option value="ALL">Général</option>';
-      users.forEach(u => recipientSelect.innerHTML += `<option value="${u}">${u}</option>`);
     }
 
     sendBtn.onclick = sendMessage;

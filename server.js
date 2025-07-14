@@ -3,7 +3,7 @@ const fs = require('fs');
 const PORT = 12345;
 const HISTORY_FILE = 'chat_history.json';
 
-let clients = {}; 
+let clients = {};
 let history = [];
 
 function loadHistory() {
@@ -76,19 +76,6 @@ function deleteMessage(timestamp, sender) {
     return null;
 }
 
-function removeMessage(timestamp, sender) {
-  for (let tab in tabs) {
-    tabs[tab].messages = tabs[tab].messages.filter(msgDiv => {
-      const btn = msgDiv.querySelector(".delete-btn");
-      if (btn && btn.dataset.timestamp === timestamp && sender === pseudo) {
-        return false; // Supprime ce message
-      }
-      return true;
-    });
-  }
-  refreshChat(); // Rafraîchit l'interface
-}
-
 const server = net.createServer(sock => {
     let buffer = '';
     let pseudo = null;
@@ -159,49 +146,3 @@ server.listen(PORT, () => {
     loadHistory();
     console.log(`✅ Serveur TCP Node.js en écoute sur port ${PORT}`);
 });
-
-ws.onmessage = (event) => {
-  const lines = event.data.split('\n');
-  for (let line of lines) {
-    if (!line.trim()) continue;
-    let obj;
-    try { obj = JSON.parse(line); } catch { continue; }
-
-    if (obj.type === 'msg') {
-      const timestamp = obj.timestamp || new Date().toLocaleTimeString();
-      const sender = obj.from;
-      const target = obj.to;
-      const msg = obj.msg;
-      const uid = `${timestamp}_${sender}_${target}_${msg}`;
-      if (displayed.has(uid)) return;
-      displayed.add(uid);
-      const tab = target === 'ALL' ? 'ALL' : (sender === pseudo ? target : sender);
-      addMessage(tab, `[${timestamp}] ${sender} ➜ ${target === 'ALL' ? 'Tous' : target} : ${msg}`, timestamp, sender);
-    }
-
-    else if (obj.type === 'delete') {
-      // Supprime le message correspondant
-      removeMessage(obj.timestamp, obj.from);
-    }
-
-    else if (obj.type === 'users') updateUsers(obj.data);
-
-    else if (obj.type === 'history') {
-      for (let msg of obj.data) {
-        const timestamp = msg.timestamp || '';
-        const sender = msg.from;
-        const target = msg.to;
-        const content = msg.msg;
-        const uid = `${timestamp}_${sender}_${target}_${content}`;
-        if (displayed.has(uid)) continue;
-        displayed.add(uid);
-        if (target === 'ALL' || sender === pseudo || target === pseudo) {
-          const tab = target === 'ALL' ? 'ALL' : (sender === pseudo ? target : sender);
-          addMessage(tab, `[${timestamp}] ${sender} ➜ ${target === 'ALL' ? 'Tous' : target} : ${content}`, timestamp, sender);
-        }
-      }
-    }
-
-    else if (obj.type === 'error') alert("Erreur : " + obj.msg);
-  }
-};
