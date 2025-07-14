@@ -6,9 +6,8 @@
   <title>Chat Local</title>
   <link rel="icon" href="images/logo.png" type="image/png">
   <style>
-    /* Your existing CSS styles */
     body {
-      font-family: 'Inconsolata', monospace;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       background: linear-gradient(135deg, #ff4500 0%, #ff7f50 50%, #ffdab9 100%);
       color: #fff;
       margin: 0;
@@ -103,6 +102,81 @@
     .message button:hover {
       background: #ff7f50;
     }
+
+    #pseudo-modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.7);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+    }
+
+    #pseudo-modal div {
+      background: #ffdab9;
+      color: #ff4500;
+      padding: 32px 24px;
+      border-radius: 12px;
+      box-shadow: 0 4px 32px rgba(255, 69, 0, 0.4);
+      text-align: center;
+      min-width: 280px;
+    }
+
+    #pseudo-modal input {
+      font-size: 18px;
+      padding: 10px;
+      border: 1px solid #ff7f50;
+      border-radius: 6px;
+      width: 80%;
+      margin-bottom: 18px;
+      color: #ff4500;
+      background: #fff;
+    }
+
+    #pseudo-modal button {
+      font-size: 17px;
+      padding: 10px 24px;
+      background: linear-gradient(90deg, #ff4500 0%, #ff7f50 100%);
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      box-shadow: 0 2px 8px rgba(255, 69, 0, 0.5);
+      margin-top: 8px;
+    }
+
+    @media (max-width: 768px) {
+      header {
+        font-size: 20px;
+        padding: 10px;
+      }
+
+      .tab {
+        padding: 8px 15px;
+        font-size: 14px;
+      }
+
+      #chat-area {
+        font-size: 14px;
+      }
+
+      #bottom-bar {
+        flex-direction: column;
+        gap: 5px;
+      }
+
+      #recipient, #message, #send {
+        width: 100%;
+      }
+
+      #send {
+        padding: 10px;
+      }
+    }
   </style>
 </head>
 <body>
@@ -182,11 +256,6 @@
 
     ws.onclose = () => {
       alert("Connexion perdue. Rafraîchissez la page.");
-    };
-
-    ws.onerror = (err) => {
-      console.error(`[ERREUR] WebSocket :`, err);
-      alert("Une erreur est survenue avec la connexion au serveur.");
     };
 
     sendBtn.onclick = sendMessage;
