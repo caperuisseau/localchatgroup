@@ -1,4 +1,10 @@
 <!DOCTYPE html>
+<script>
+  // Notification permission request
+  if ("Notification" in window && Notification.permission !== "granted") {
+    Notification.requestPermission();
+  }
+</script>
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
@@ -294,6 +300,13 @@
           displayed.add(uid);
           const tab = target === 'ALL' ? 'ALL' : (sender === pseudo ? target : sender);
           addMessage(tab, `[${timestamp}] ${sender} ➜ ${target === 'ALL' ? 'Tous' : target} : ${msg}`);
+
+          if (sender !== pseudo && Notification.permission === "granted") {
+            new Notification(`Message de ${sender}`, {
+              body: msg,
+              icon: "images/notification.png"
+            });
+          }
         }
 
         else if (obj.type === 'users') {
