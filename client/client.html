@@ -280,7 +280,7 @@
           if (displayed.has(uid)) return;
           displayed.add(uid);
           const tab = target === 'ALL' ? 'ALL' : (sender === pseudo ? target : sender);
-          addMessage(tab, `[${timestamp}] ${sender} ➜ ${target === 'ALL' ? 'Tous' : target} : ${msg}`);
+          addMessage(tab, `[${timestamp}] ${sender} ➜ ${target === 'ALL' ? 'Tous' : target} : ${msg}`, timestamp, sender);
         }
 
         else if (obj.type === 'users') updateUsers(obj.data);
