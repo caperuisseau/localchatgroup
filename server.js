@@ -69,11 +69,11 @@ function sendHistory(sock) {
 function deleteMessage(timestamp, sender) {
     const index = history.findIndex(msg => msg.timestamp === timestamp && msg.from === sender);
     if (index !== -1) {
-        const deletedMessage = history.splice(index, 1)[0]; // Supprime le message et le retourne
+        history.splice(index, 1); // Supprime le message
         saveHistory(); // Sauvegarde l'historique mis à jour
-        return deletedMessage; // Retourne le message supprimé
+        return true;
     }
-    return null;
+    return false;
 }
 
 const server = net.createServer(sock => {
@@ -114,9 +114,8 @@ const server = net.createServer(sock => {
                 const to = obj.to;
                 broadcast(msg, pseudo, to);
             } else if (obj.type === 'delete') {
-                const deletedMessage = deleteMessage(obj.timestamp, pseudo);
-                if (deletedMessage) {
-                    // Diffuse à tous les clients que le message a été supprimé
+                const success = deleteMessage(obj.timestamp, pseudo);
+                if (success) {
                     const deleteNotification = {
                         type: 'delete',
                         timestamp: obj.timestamp,

@@ -144,6 +144,22 @@
       margin-top: 8px;
     }
 
+    .delete-btn {
+      font-size: 12px;
+      padding: 5px 10px;
+      background: #ff4500;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      margin-left: 10px;
+      box-shadow: 0 2px 8px rgba(255, 69, 0, 0.5);
+    }
+
+    .delete-btn:hover {
+      background: #ff7f50;
+    }
+
     @media (max-width: 768px) {
       header {
         font-size: 20px;
@@ -245,14 +261,16 @@
           if (displayed.has(uid)) return;
           displayed.add(uid);
           const tab = target === 'ALL' ? 'ALL' : (sender === pseudo ? target : sender);
-          addMessage(tab, `[${timestamp}] ${sender} ➜ ${target === 'ALL' ? 'Tous' : target} : ${msg}`);
+          addMessage(tab, `[${timestamp}] ${sender} ➜ ${target === 'ALL' ? 'Tous' : target} : ${msg}`, timestamp, sender);
+        }
 
-          if (sender !== pseudo && Notification.permission === "granted") {
-            new Notification(`Message de ${sender}`, {
-              body: msg,
-              icon: "images/notification.png"
-            });
+        else if (obj.type === 'delete') {
+          const timestamp = obj.timestamp;
+          const from = obj.from;
+          for (let tab in tabs) {
+            tabs[tab].messages = tabs[tab].messages.filter(msg => !msg.includes(`[${timestamp}] ${from}`));
           }
+          refreshChat();
         }
 
         else if (obj.type === 'users') updateUsers(obj.data);
@@ -277,7 +295,7 @@
       }
     };
 
-    function addMessage(tab, text) {
+    function addMessage(tab, text, timestamp = null, sender = null) {
       if (!tabs[tab]) {
         const div = document.createElement("div");
         div.className = "tab";
@@ -286,8 +304,24 @@
         tabsDiv.appendChild(div);
         tabs[tab] = { div: div, messages: [] };
       }
-      tabs[tab].messages.push(text);
+
+      const messageHTML = document.createElement("div");
+      messageHTML.innerHTML = text;
+
+      if (timestamp && sender === pseudo) {
+        const deleteBtn = document.createElement("button");
+        deleteBtn.className = "delete-btn";
+        deleteBtn.textContent = "Supprimer";
+        deleteBtn.onclick = () => deleteMessage(timestamp);
+        messageHTML.appendChild(deleteBtn);
+      }
+
+      tabs[tab].messages.push(messageHTML.outerHTML);
       if (currentTab === tab) refreshChat();
+    }
+
+    function deleteMessage(timestamp) {
+      ws.send(JSON.stringify({ type: 'delete', timestamp: timestamp }));
     }
 
     function switchTab(tab) {
