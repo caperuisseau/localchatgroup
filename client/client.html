@@ -156,6 +156,29 @@
       font-family: 'Inconsolata', monospace;
     }
 
+    .message {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 5px;
+      border-bottom: 1px solid #ff7f50;
+    }
+
+    .message button {
+      margin-left: 10px;
+      padding: 5px 10px;
+      font-size: 12px;
+      background: #ff4500;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    .message button:hover {
+      background: #ff7f50;
+    }
+
     @media (max-width: 768px) {
       header {
         font-size: 20px;
@@ -208,22 +231,6 @@
 </div>
 
 <script>
-  // 🔐 Redirection HTTPS sauf localhost
-  if (location.protocol !== "https:" && location.hostname !== "localhost") {
-    location.href = "https://" + location.hostname + location.pathname + location.search;
-  }
-
-  // 🔔 Notifications
-  const isSecure = location.protocol === "https:" || location.hostname === "localhost";
-  if ("Notification" in window && isSecure) {
-    if (Notification.permission === "default") {
-      Notification.requestPermission().then(permission => {
-        if (permission !== "granted") {
-          alert("❌ Notifications refusées !");
-        }
-      });
-    }
-  }
 
   // Interface pseudo
   let pseudo = "";
