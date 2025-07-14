@@ -6,6 +6,7 @@ const HISTORY_FILE = 'chat_history.json';
 let clients = {};
 let history = [];
 
+// Charger l'historique des messages
 function loadHistory() {
     if (fs.existsSync(HISTORY_FILE)) {
         try {
@@ -21,6 +22,7 @@ function loadHistory() {
     }
 }
 
+// Sauvegarder l'historique des messages
 function saveHistory() {
     try {
         fs.writeFileSync(HISTORY_FILE, JSON.stringify(history, null, 2), 'utf-8');
@@ -29,6 +31,7 @@ function saveHistory() {
     }
 }
 
+// Diffuser un message à tous les clients concernés
 function broadcast(msg, sender = null, recipient = null) {
     const now = new Date();
     const timestamp = now.toTimeString().split(' ')[0];
@@ -53,6 +56,7 @@ function broadcast(msg, sender = null, recipient = null) {
     });
 }
 
+// Envoyer la liste des utilisateurs connectés
 function sendUsers() {
     const userList = Object.keys(clients);
     const msg = JSON.stringify({ type: 'users', data: userList }) + '\n';
@@ -61,11 +65,13 @@ function sendUsers() {
     });
 }
 
+// Envoyer l'historique des messages à un client
 function sendHistory(sock) {
     const msg = JSON.stringify({ type: 'history', data: history }) + '\n';
     sock.write(msg);
 }
 
+// Supprimer un message de l'historique
 function deleteMessage(timestamp, sender) {
     const index = history.findIndex(msg => msg.timestamp === timestamp && msg.from === sender);
     if (index !== -1) {
@@ -73,9 +79,10 @@ function deleteMessage(timestamp, sender) {
         saveHistory(); // Sauvegarde l'historique mis à jour
         return true;
     }
-    return false;
+    return false; // Retourne false si le message n'existe pas
 }
 
+// Création du serveur
 const server = net.createServer(sock => {
     let buffer = '';
     let pseudo = null;
@@ -126,6 +133,8 @@ const server = net.createServer(sock => {
                             client.write(JSON.stringify(deleteNotification) + '\n');
                         } catch {}
                     });
+                } else {
+                    sock.write(JSON.stringify({ type: 'error', msg: 'Message introuvable ou déjà supprimé' }) + '\n');
                 }
             }
         }
@@ -141,6 +150,7 @@ const server = net.createServer(sock => {
     sock.on('error', () => {});
 });
 
+// Démarrage du serveur
 server.listen(PORT, () => {
     loadHistory();
     console.log(`✅ Serveur TCP Node.js en écoute sur port ${PORT}`);

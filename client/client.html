@@ -306,13 +306,18 @@
 
       const messageContainer = document.createElement("div");
       messageContainer.className = "message-container";
+      messageContainer.dataset.timestamp = timestamp; // Ajout du timestamp pour identifier le message
       messageContainer.innerHTML = text;
 
       if (timestamp && sender === pseudo) {
         const deleteBtn = document.createElement("button");
         deleteBtn.className = "delete-btn";
         deleteBtn.textContent = "Supprimer";
-        deleteBtn.onclick = () => deleteMessage(timestamp);
+        deleteBtn.onclick = () => {
+          if (messageContainer.classList.contains("deleted")) return; // Empêche la suppression répétée
+          deleteMessage(timestamp);
+          messageContainer.classList.add("deleted"); // Marque le message comme supprimé
+        };
         messageContainer.appendChild(deleteBtn);
       }
 
