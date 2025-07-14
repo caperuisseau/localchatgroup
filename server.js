@@ -69,11 +69,24 @@ function sendHistory(sock) {
 function deleteMessage(timestamp, sender) {
     const index = history.findIndex(msg => msg.timestamp === timestamp && msg.from === sender);
     if (index !== -1) {
-        history.splice(index, 1); // Supprime le message de l'historique
+        const deletedMessage = history.splice(index, 1)[0]; // Supprime le message et le retourne
         saveHistory(); // Sauvegarde l'historique mis à jour
-        return true;
+        return deletedMessage; // Retourne le message supprimé
     }
-    return false;
+    return null;
+}
+
+function removeMessage(timestamp, sender) {
+  for (let tab in tabs) {
+    tabs[tab].messages = tabs[tab].messages.filter(msgDiv => {
+      const btn = msgDiv.querySelector(".delete-btn");
+      if (btn && btn.dataset.timestamp === timestamp && sender === pseudo) {
+        return false; // Supprime ce message
+      }
+      return true;
+    });
+  }
+  refreshChat(); // Rafraîchit l'interface
 }
 
 const server = net.createServer(sock => {
@@ -114,9 +127,20 @@ const server = net.createServer(sock => {
                 const to = obj.to;
                 broadcast(msg, pseudo, to);
             } else if (obj.type === 'delete') {
-                const success = deleteMessage(obj.timestamp, pseudo);
-                sock.write(JSON.stringify({ type: 'delete', success, timestamp: obj.timestamp }) + '\n');
-                if (success) broadcast(`Message supprimé`, pseudo);
+                const deletedMessage = deleteMessage(obj.timestamp, pseudo);
+                if (deletedMessage) {
+                    // Diffuse à tous les clients que le message a été supprimé
+                    const deleteNotification = {
+                        type: 'delete',
+                        timestamp: obj.timestamp,
+                        from: pseudo
+                    };
+                    Object.values(clients).forEach(client => {
+                        try {
+                            client.write(JSON.stringify(deleteNotification) + '\n');
+                        } catch {}
+                    });
+                }
             }
         }
     });
@@ -135,3 +159,49 @@ server.listen(PORT, () => {
     loadHistory();
     console.log(`✅ Serveur TCP Node.js en écoute sur port ${PORT}`);
 });
+
+ws.onmessage = (event) => {
+  const lines = event.data.split('\n');
+  for (let line of lines) {
+    if (!line.trim()) continue;
+    let obj;
+    try { obj = JSON.parse(line); } catch { continue; }
+
+    if (obj.type === 'msg') {
+      const timestamp = obj.timestamp || new Date().toLocaleTimeString();
+      const sender = obj.from;
+      const target = obj.to;
+      const msg = obj.msg;
+      const uid = `${timestamp}_${sender}_${target}_${msg}`;
+      if (displayed.has(uid)) return;
+      displayed.add(uid);
+      const tab = target === 'ALL' ? 'ALL' : (sender === pseudo ? target : sender);
+      addMessage(tab, `[${timestamp}] ${sender} ➜ ${target === 'ALL' ? 'Tous' : target} : ${msg}`, timestamp, sender);
+    }
+
+    else if (obj.type === 'delete') {
+      // Supprime le message correspondant
+      removeMessage(obj.timestamp, obj.from);
+    }
+
+    else if (obj.type === 'users') updateUsers(obj.data);
+
+    else if (obj.type === 'history') {
+      for (let msg of obj.data) {
+        const timestamp = msg.timestamp || '';
+        const sender = msg.from;
+        const target = msg.to;
+        const content = msg.msg;
+        const uid = `${timestamp}_${sender}_${target}_${content}`;
+        if (displayed.has(uid)) continue;
+        displayed.add(uid);
+        if (target === 'ALL' || sender === pseudo || target === pseudo) {
+          const tab = target === 'ALL' ? 'ALL' : (sender === pseudo ? target : sender);
+          addMessage(tab, `[${timestamp}] ${sender} ➜ ${target === 'ALL' ? 'Tous' : target} : ${content}`, timestamp, sender);
+        }
+      }
+    }
+
+    else if (obj.type === 'error') alert("Erreur : " + obj.msg);
+  }
+};
