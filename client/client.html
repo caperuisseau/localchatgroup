@@ -4,10 +4,10 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>chat local</title>
-  <link rel="icon" href="logo.png" type="image/png">
+  <link rel="icon" href="images/logo.png" type="image/png">
   <style>
     body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      font-family: 'Inconsolata', monospace;
       background: linear-gradient(135deg, #ff4500 0%, #ff7f50 50%, #ffdab9 100%);
       color: #fff;
       margin: 0;
@@ -25,6 +25,7 @@
       font-size: 24px;
       font-weight: bold;
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+      font-family: 'Inconsolata', monospace;
     }
 
     #tabs {
@@ -32,6 +33,7 @@
       background: #ff7f50;
       border-bottom: 2px solid #ff4500;
       overflow-x: auto;
+      font-family: 'Inconsolata', monospace;
     }
 
     .tab {
@@ -42,6 +44,7 @@
       text-align: center;
       flex: 1;
       border-right: 1px solid #ff4500;
+      font-family: 'Inconsolata', monospace;
     }
 
     .tab.active {
@@ -58,6 +61,7 @@
       color: #333;
       display: flex;
       flex-direction: column;
+      font-family: 'Inconsolata', monospace;
     }
 
     #bottom-bar {
@@ -66,6 +70,7 @@
       background: #ff7f50;
       align-items: center;
       gap: 10px;
+      font-family: 'Inconsolata', monospace;
     }
 
     #recipient {
@@ -75,6 +80,7 @@
       border-radius: 6px;
       background: #ffdab9;
       color: #ff4500;
+      font-family: 'Inconsolata', monospace;
     }
 
     #message {
@@ -85,6 +91,7 @@
       border-radius: 6px;
       background: #fff;
       color: #333;
+      font-family: 'Inconsolata', monospace;
     }
 
     #send {
@@ -96,6 +103,7 @@
       border-radius: 6px;
       cursor: pointer;
       box-shadow: 0 2px 8px rgba(255, 69, 0, 0.5);
+      font-family: 'Inconsolata', monospace;
     }
 
     #pseudo-modal {
@@ -109,6 +117,7 @@
       align-items: center;
       justify-content: center;
       z-index: 9999;
+      font-family: 'Inconsolata', monospace;
     }
 
     #pseudo-modal div {
@@ -119,6 +128,7 @@
       box-shadow: 0 4px 32px rgba(255, 69, 0, 0.4);
       text-align: center;
       min-width: 280px;
+      font-family: 'Inconsolata', monospace;
     }
 
     #pseudo-modal input {
@@ -130,6 +140,7 @@
       margin-bottom: 18px;
       color: #ff4500;
       background: #fff;
+      font-family: 'Inconsolata', monospace;
     }
 
     #pseudo-modal button {
@@ -142,6 +153,7 @@
       cursor: pointer;
       box-shadow: 0 2px 8px rgba(255, 69, 0, 0.5);
       margin-top: 8px;
+      font-family: 'Inconsolata', monospace;
     }
 
     @media (max-width: 768px) {
@@ -262,13 +274,6 @@
           displayed.add(uid);
           const tab = target === 'ALL' ? 'ALL' : (sender === pseudo ? target : sender);
           addMessage(tab, `[${timestamp}] ${sender} ➜ ${target === 'ALL' ? 'Tous' : target} : ${msg}`);
-
-          if (sender !== pseudo && Notification.permission === "granted") {
-            new Notification(`Message de ${sender}`, {
-              body: msg,
-              icon: "images/notification.png"
-            });
-          }
         }
 
         else if (obj.type === 'users') updateUsers(obj.data);
@@ -293,7 +298,7 @@
       }
     };
 
-    function addMessage(tab, text) {
+    function addMessage(tab, text, timestamp, sender) {
       if (!tabs[tab]) {
         const div = document.createElement("div");
         div.className = "tab";
@@ -302,7 +307,33 @@
         tabsDiv.appendChild(div);
         tabs[tab] = { div: div, messages: [] };
       }
-      tabs[tab].messages.push(text);
+
+      const messageDiv = document.createElement("div");
+      messageDiv.className = "message";
+      messageDiv.innerHTML = `
+        <span>${text}</span>
+        ${sender === pseudo ? `
+          <button class="edit-btn" data-timestamp="${timestamp}">Modifier</button>
+          <button class="delete-btn" data-timestamp="${timestamp}">Supprimer</button>
+        ` : ''}
+      `;
+      messageDiv.querySelectorAll(".edit-btn").forEach(btn => {
+          btn.onclick = () => {
+              const newContent = prompt("Modifier le message :", text);
+              if (newContent) {
+                  ws.send(JSON.stringify({ type: 'edit', timestamp: btn.dataset.timestamp, newContent }));
+              }
+          };
+      });
+      messageDiv.querySelectorAll(".delete-btn").forEach(btn => {
+          btn.onclick = () => {
+              if (confirm("Voulez-vous vraiment supprimer ce message ?")) {
+                  ws.send(JSON.stringify({ type: 'delete', timestamp: btn.dataset.timestamp }));
+              }
+          };
+      });
+
+      tabs[tab].messages.push(messageDiv);
       if (currentTab === tab) refreshChat();
     }
 
@@ -315,7 +346,8 @@
     }
 
     function refreshChat() {
-      chatArea.innerHTML = tabs[currentTab].messages.join("<br>");
+      chatArea.innerHTML = '';
+      tabs[currentTab].messages.forEach(msgDiv => chatArea.appendChild(msgDiv));
       chatArea.scrollTop = chatArea.scrollHeight;
     }
 

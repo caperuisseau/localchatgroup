@@ -66,6 +66,26 @@ function sendHistory(sock) {
     sock.write(msg);
 }
 
+function deleteMessage(timestamp, sender) {
+    const index = history.findIndex(msg => msg.timestamp === timestamp && msg.from === sender);
+    if (index !== -1) {
+        history.splice(index, 1);
+        saveHistory();
+        return true;
+    }
+    return false;
+}
+
+function editMessage(timestamp, sender, newContent) {
+    const msg = history.find(msg => msg.timestamp === timestamp && msg.from === sender);
+    if (msg) {
+        msg.msg = newContent;
+        saveHistory();
+        return true;
+    }
+    return false;
+}
+
 const server = net.createServer(sock => {
     let buffer = '';
     let pseudo = null;
@@ -103,6 +123,14 @@ const server = net.createServer(sock => {
                 const msg = obj.msg || '';
                 const to = obj.to;
                 broadcast(msg, pseudo, to);
+            } else if (obj.type === 'delete') {
+                const success = deleteMessage(obj.timestamp, pseudo);
+                sock.write(JSON.stringify({ type: 'delete', success, timestamp: obj.timestamp }) + '\n');
+                if (success) broadcast(`Message supprimé`, pseudo);
+            } else if (obj.type === 'edit') {
+                const success = editMessage(obj.timestamp, pseudo, obj.newContent);
+                sock.write(JSON.stringify({ type: 'edit', success, timestamp: obj.timestamp }) + '\n');
+                if (success) broadcast(`Message modifié`, pseudo);
             } else if (obj.type === 'poll') {
                 sendHistory(sock);
                 sendUsers();
