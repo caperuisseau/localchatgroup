@@ -320,24 +320,17 @@
       messageDiv.innerHTML = `
         <span>${text}</span>
         ${sender === pseudo ? `
-          <button class="edit-btn" data-timestamp="${timestamp}">Modifier</button>
           <button class="delete-btn" data-timestamp="${timestamp}">Supprimer</button>
         ` : ''}
       `;
-      messageDiv.querySelectorAll(".edit-btn").forEach(btn => {
-          btn.onclick = () => {
-              const newContent = prompt("Modifier le message :", text);
-              if (newContent) {
-                  ws.send(JSON.stringify({ type: 'edit', timestamp: btn.dataset.timestamp, newContent }));
-              }
-          };
-      });
+
+      // Gestion du bouton "Supprimer"
       messageDiv.querySelectorAll(".delete-btn").forEach(btn => {
-          btn.onclick = () => {
-              if (confirm("Voulez-vous vraiment supprimer ce message ?")) {
-                  ws.send(JSON.stringify({ type: 'delete', timestamp: btn.dataset.timestamp }));
-              }
-          };
+        btn.onclick = () => {
+          if (confirm("Voulez-vous vraiment supprimer ce message ?")) {
+            ws.send(JSON.stringify({ type: 'delete', timestamp: btn.dataset.timestamp }));
+          }
+        };
       });
 
       tabs[tab].messages.push(messageDiv);
