@@ -3,9 +3,10 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>chat local</title>
+  <title>Chat Local</title>
   <link rel="icon" href="images/logo.png" type="image/png">
   <style>
+    /* Your existing CSS styles */
     body {
       font-family: 'Inconsolata', monospace;
       background: linear-gradient(135deg, #ff4500 0%, #ff7f50 50%, #ffdab9 100%);
@@ -24,8 +25,6 @@
       text-align: center;
       font-size: 24px;
       font-weight: bold;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-      font-family: 'Inconsolata', monospace;
     }
 
     #tabs {
@@ -33,7 +32,6 @@
       background: #ff7f50;
       border-bottom: 2px solid #ff4500;
       overflow-x: auto;
-      font-family: 'Inconsolata', monospace;
     }
 
     .tab {
@@ -44,7 +42,6 @@
       text-align: center;
       flex: 1;
       border-right: 1px solid #ff4500;
-      font-family: 'Inconsolata', monospace;
     }
 
     .tab.active {
@@ -61,7 +58,6 @@
       color: #333;
       display: flex;
       flex-direction: column;
-      font-family: 'Inconsolata', monospace;
     }
 
     #bottom-bar {
@@ -70,90 +66,19 @@
       background: #ff7f50;
       align-items: center;
       gap: 10px;
-      font-family: 'Inconsolata', monospace;
     }
 
-    #recipient {
-      font-size: 16px;
-      padding: 8px;
-      border: 1px solid #ff4500;
-      border-radius: 6px;
-      background: #ffdab9;
-      color: #ff4500;
-      font-family: 'Inconsolata', monospace;
-    }
-
-    #message {
-      flex: 1;
+    #recipient, #message, #send {
       font-size: 16px;
       padding: 10px;
-      border: 1px solid #ff4500;
       border-radius: 6px;
-      background: #fff;
-      color: #333;
-      font-family: 'Inconsolata', monospace;
     }
 
     #send {
-      padding: 10px 20px;
-      font-size: 16px;
       background: linear-gradient(90deg, #ff4500 0%, #ff7f50 100%);
       color: #fff;
       border: none;
-      border-radius: 6px;
       cursor: pointer;
-      box-shadow: 0 2px 8px rgba(255, 69, 0, 0.5);
-      font-family: 'Inconsolata', monospace;
-    }
-
-    #pseudo-modal {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: rgba(0, 0, 0, 0.7);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 9999;
-      font-family: 'Inconsolata', monospace;
-    }
-
-    #pseudo-modal div {
-      background: #ffdab9;
-      color: #ff4500;
-      padding: 32px 24px;
-      border-radius: 12px;
-      box-shadow: 0 4px 32px rgba(255, 69, 0, 0.4);
-      text-align: center;
-      min-width: 280px;
-      font-family: 'Inconsolata', monospace;
-    }
-
-    #pseudo-modal input {
-      font-size: 18px;
-      padding: 10px;
-      border: 1px solid #ff7f50;
-      border-radius: 6px;
-      width: 80%;
-      margin-bottom: 18px;
-      color: #ff4500;
-      background: #fff;
-      font-family: 'Inconsolata', monospace;
-    }
-
-    #pseudo-modal button {
-      font-size: 17px;
-      padding: 10px 24px;
-      background: linear-gradient(90deg, #ff4500 0%, #ff7f50 100%);
-      color: #fff;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      box-shadow: 0 2px 8px rgba(255, 69, 0, 0.5);
-      margin-top: 8px;
-      font-family: 'Inconsolata', monospace;
     }
 
     .message {
@@ -178,40 +103,11 @@
     .message button:hover {
       background: #ff7f50;
     }
-
-    @media (max-width: 768px) {
-      header {
-        font-size: 20px;
-        padding: 10px;
-      }
-
-      .tab {
-        padding: 8px 15px;
-        font-size: 14px;
-      }
-
-      #chat-area {
-        font-size: 14px;
-      }
-
-      #bottom-bar {
-        flex-direction: column;
-        gap: 5px;
-      }
-
-      #recipient, #message, #send {
-        width: 100%;
-      }
-
-      #send {
-        padding: 10px;
-      }
-    }
   </style>
 </head>
 <body>
 
-<!-- Choix pseudo -->
+<!-- Pseudo Modal -->
 <div id="pseudo-modal">
   <div>
     <h2>Choisissez votre pseudo</h2>
@@ -226,14 +122,16 @@
 <div id="chat-area"></div>
 <div id="bottom-bar">
   <select id="recipient"><option value="ALL">Général</option></select>
-  <input id="message" placeholder="écrivez votre message" />
+  <input id="message" placeholder="Écrivez votre message" />
   <button id="send">Envoyer</button>
 </div>
 
 <script>
-
-  // Interface pseudo
   let pseudo = "";
+  const tabs = {};
+  let currentTab = "ALL";
+  const displayed = new Set();
+
   document.getElementById("pseudo-btn").onclick = () => {
     const val = document.getElementById("pseudo-input").value.trim();
     if (val.length < 2) {
@@ -244,16 +142,9 @@
     document.getElementById("pseudo-modal").style.display = "none";
     startChat();
   };
-  document.getElementById("pseudo-input").onkeydown = e => {
-    if (e.key === "Enter") document.getElementById("pseudo-btn").click();
-  };
 
   function startChat() {
     const ws = new WebSocket("ws://" + location.hostname + ":12345");
-    const tabs = {};
-    let currentTab = "ALL";
-    const displayed = new Set();
-
     const recipientSelect = document.getElementById("recipient");
     const messageInput = document.getElementById("message");
     const sendBtn = document.getElementById("send");
@@ -289,11 +180,34 @@
       }
     };
 
+    ws.onclose = () => {
+      alert("Connexion perdue. Rafraîchissez la page.");
+    };
+
+    ws.onerror = (err) => {
+      console.error(`[ERREUR] WebSocket :`, err);
+      alert("Une erreur est survenue avec la connexion au serveur.");
+    };
+
+    sendBtn.onclick = sendMessage;
+    messageInput.onkeydown = (e) => {
+      if (e.key === "Enter") sendMessage();
+    };
+
+    function sendMessage() {
+      const text = messageInput.value.trim();
+      if (!text) return;
+      const to = recipientSelect.value === "ALL" ? "ALL" : recipientSelect.value;
+      const obj = { type: "msg", msg: text, from: pseudo, to: to };
+      ws.send(JSON.stringify(obj));
+      setTimeout(() => { messageInput.value = ""; }, 10);
+    }
+
     function addMessage(tab, text, timestamp, sender) {
       if (!tabs[tab]) {
         const div = document.createElement("div");
         div.className = "tab";
-        div.textContent = tab === 'ALL' ? "Général" : `🔒 ${tab}`;
+        div.textContent = tab === "ALL" ? "Général" : `🔒 ${tab}`;
         div.onclick = () => switchTab(tab);
         tabsDiv.appendChild(div);
         tabs[tab] = { div: div, messages: [] };
@@ -303,15 +217,13 @@
       messageDiv.className = "message";
       messageDiv.innerHTML = `
         <span>${text}</span>
-        ${sender === pseudo ? `
-          <button class="delete-btn" data-timestamp="${timestamp}">Supprimer</button>
-        ` : ''}
+        ${sender === pseudo ? `<button class="delete-btn" data-timestamp="${timestamp}">Supprimer</button>` : ""}
       `;
 
       messageDiv.querySelectorAll(".delete-btn").forEach(btn => {
         btn.onclick = () => {
           if (confirm("Voulez-vous vraiment supprimer ce message ?")) {
-            ws.send(JSON.stringify({ type: 'delete', timestamp: btn.dataset.timestamp }));
+            ws.send(JSON.stringify({ type: "delete", timestamp: btn.dataset.timestamp }));
           }
         };
       });
@@ -324,10 +236,7 @@
       for (let tab in tabs) {
         tabs[tab].messages = tabs[tab].messages.filter(msgDiv => {
           const btn = msgDiv.querySelector(".delete-btn");
-          if (btn && btn.dataset.timestamp === timestamp && sender === pseudo) {
-            return false;
-          }
-          return true;
+          return !(btn && btn.dataset.timestamp === timestamp && sender === pseudo);
         });
       }
       refreshChat();
@@ -338,33 +247,14 @@
       for (let key in tabs) tabs[key].div.classList.remove("active");
       tabs[tab].div.classList.add("active");
       refreshChat();
-      recipientSelect.value = tab === 'ALL' ? 'ALL' : tab;
+      recipientSelect.value = tab === "ALL" ? "ALL" : tab;
     }
 
     function refreshChat() {
-      chatArea.innerHTML = '';
+      chatArea.innerHTML = "";
       tabs[currentTab].messages.forEach(msgDiv => chatArea.appendChild(msgDiv));
       chatArea.scrollTop = chatArea.scrollHeight;
     }
-
-    sendBtn.onclick = sendMessage;
-    messageInput.onkeydown = e => {
-      if (e.key === 'Enter') sendMessage();
-    };
-
-    function sendMessage() {
-      const text = messageInput.value.trim();
-      if (!text) return;
-      const to = recipientSelect.value === 'ALL' ? 'ALL' : recipientSelect.value;
-      const obj = { type: 'msg', msg: text, from: pseudo, to: to };
-      ws.send(JSON.stringify(obj));
-      setTimeout(() => { messageInput.value = ''; }, 10);
-    }
-
-    ws.onclose = () => alert("Connexion perdue. Rafraîchissez la page.");
-    addMessage("ALL", `Bienvenue ${pseudo} !`);
-    addMessage("ALL", "Les messages ne peuvent pas être supprimés ou modifiés.");
-    switchTab("ALL");
   }
 </script>
 </body>
