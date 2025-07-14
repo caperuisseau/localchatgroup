@@ -1,240 +1,224 @@
 <!DOCTYPE html>
-<script>
-  // Notification permission request
-  if ("Notification" in window && Notification.permission !== "granted") {
-    Notification.requestPermission();
-  }
-</script>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>chat local</title>
+  <link rel="icon" href="logo.png" type="image/png">
   <style>
-  /* General styles */
-  body {
-    font-family: 'Montserrat', 'Segoe UI', sans-serif;
-    background: linear-gradient(135deg, #ff4500 0%, #ff7f50 50%, #ffdab9 100%);
-    color: #fff;
-    margin: 0;
-    padding: 0;
-    display: flex;
-    flex-direction: column;
-    height: 100vh;
-  }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #ff4500 0%, #ff7f50 50%, #ffdab9 100%);
+      color: #fff;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+    }
 
-  header {
-    background: linear-gradient(90deg, #ff4500 0%, #ff7f50 100%);
-    color: #fff;
-    padding: 15px;
-    text-align: center;
-    font-size: 24px;
-    font-weight: bold;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-  }
-
-  #tabs {
-    display: flex;
-    background: #ff7f50;
-    border-bottom: 2px solid #ff4500;
-    overflow-x: auto;
-  }
-
-  .tab {
-    padding: 10px 20px;
-    cursor: pointer;
-    color: #fff;
-    font-weight: bold;
-    text-align: center;
-    flex: 1;
-    border-right: 1px solid #ff4500;
-  }
-
-  .tab.active {
-    background: #ff4500;
-    color: #ffdab9;
-  }
-
-  #chat-area {
-    flex: 1;
-    overflow-y: auto;
-    padding: 15px;
-    background: #ffdab9;
-    font-size: 16px;
-    color: #333;
-    display: flex;
-    flex-direction: column;
-  }
-
-  #bottom-bar {
-    display: flex;
-    padding: 10px;
-    background: #ff7f50;
-    align-items: center;
-    gap: 10px;
-  }
-
-  #recipient {
-    font-size: 16px;
-    padding: 8px;
-    border: 1px solid #ff4500;
-    border-radius: 6px;
-    background: #ffdab9;
-    color: #ff4500;
-  }
-
-  #message {
-    flex: 1;
-    font-size: 16px;
-    padding: 10px;
-    border: 1px solid #ff4500;
-    border-radius: 6px;
-    background: #fff;
-    color: #333;
-  }
-
-  #send {
-    padding: 10px 20px;
-    font-size: 16px;
-    background: linear-gradient(90deg, #ff4500 0%, #ff7f50 100%);
-    color: #fff;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-    box-shadow: 0 2px 8px rgba(255, 69, 0, 0.5);
-  }
-
-  /* Modal for pseudo selection */
-  #pseudo-modal {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0, 0, 0, 0.7);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 9999;
-  }
-
-  #pseudo-modal div {
-    background: #ffdab9;
-    color: #ff4500;
-    padding: 32px 24px;
-    border-radius: 12px;
-    box-shadow: 0 4px 32px rgba(255, 69, 0, 0.4);
-    text-align: center;
-    min-width: 280px;
-  }
-
-  #pseudo-modal input {
-    font-size: 18px;
-    padding: 10px;
-    border: 1px solid #ff7f50;
-    border-radius: 6px;
-    width: 80%;
-    margin-bottom: 18px;
-    color: #ff4500;
-    background: #fff;
-  }
-
-  #pseudo-modal button {
-    font-size: 17px;
-    padding: 10px 24px;
-    background: linear-gradient(90deg, #ff4500 0%, #ff7f50 100%);
-    color: #fff;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-    box-shadow: 0 2px 8px rgba(255, 69, 0, 0.5);
-    margin-top: 8px;
-  }
-
-  /* Responsive design for smartphones */
-  @media (max-width: 768px) {
     header {
-      font-size: 20px;
-      padding: 10px;
+      background: linear-gradient(90deg, #ff4500 0%, #ff7f50 100%);
+      color: #fff;
+      padding: 15px;
+      text-align: center;
+      font-size: 24px;
+      font-weight: bold;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    #tabs {
+      display: flex;
+      background: #ff7f50;
+      border-bottom: 2px solid #ff4500;
+      overflow-x: auto;
     }
 
     .tab {
-      padding: 8px 15px;
-      font-size: 14px;
+      padding: 10px 20px;
+      cursor: pointer;
+      color: #fff;
+      font-weight: bold;
+      text-align: center;
+      flex: 1;
+      border-right: 1px solid #ff4500;
+    }
+
+    .tab.active {
+      background: #ff4500;
+      color: #ffdab9;
     }
 
     #chat-area {
-      font-size: 14px;
+      flex: 1;
+      overflow-y: auto;
+      padding: 15px;
+      background: #ffdab9;
+      font-size: 16px;
+      color: #333;
+      display: flex;
+      flex-direction: column;
     }
 
     #bottom-bar {
-      flex-direction: column;
-      gap: 5px;
+      display: flex;
+      padding: 10px;
+      background: #ff7f50;
+      align-items: center;
+      gap: 10px;
     }
 
-    #recipient, #message, #send {
-      width: 100%;
+    #recipient {
+      font-size: 16px;
+      padding: 8px;
+      border: 1px solid #ff4500;
+      border-radius: 6px;
+      background: #ffdab9;
+      color: #ff4500;
+    }
+
+    #message {
+      flex: 1;
+      font-size: 16px;
+      padding: 10px;
+      border: 1px solid #ff4500;
+      border-radius: 6px;
+      background: #fff;
+      color: #333;
     }
 
     #send {
-      padding: 10px;
-    }
-  }
-  </style>
-</head>
-<body>
-<!-- Interface de choix du pseudo -->
-<div id="pseudo-modal" style="
-  position: fixed;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(0,0,0,0.7);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 9999;
-">
-  <div style="
-    background: #fff3e0;
-    color: #ff3c00;
-    padding: 32px 24px;
-    border-radius: 12px;
-    box-shadow: 0 4px 32px #ff980066;
-    text-align: center;
-    min-width: 280px;
-  ">
-    <h2 style="margin-bottom: 18px;">Choisissez votre pseudo</h2>
-    <input id="pseudo-input" type="text" maxlength="24" placeholder="Entrez votre pseudo" style="
-      font-size: 18px;
-      padding: 10px;
-      border: 1px solid #ff9800;
-      border-radius: 6px;
-      width: 80%;
-      margin-bottom: 18px;
-      color: #ff3c00;
-      background: #fff;
-    " />
-    <br>
-    <button id="pseudo-btn" style="
-      font-size: 17px;
-      padding: 10px 24px;
-      background: linear-gradient(90deg, #ff3c00 0%, #ff9800 100%);
+      padding: 10px 20px;
+      font-size: 16px;
+      background: linear-gradient(90deg, #ff4500 0%, #ff7f50 100%);
       color: #fff;
       border: none;
       border-radius: 6px;
       cursor: pointer;
-      box-shadow: 0 2px 8px #ff980066;
+      box-shadow: 0 2px 8px rgba(255, 69, 0, 0.5);
+    }
+
+    #pseudo-modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.7);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+    }
+
+    #pseudo-modal div {
+      background: #ffdab9;
+      color: #ff4500;
+      padding: 32px 24px;
+      border-radius: 12px;
+      box-shadow: 0 4px 32px rgba(255, 69, 0, 0.4);
+      text-align: center;
+      min-width: 280px;
+    }
+
+    #pseudo-modal input {
+      font-size: 18px;
+      padding: 10px;
+      border: 1px solid #ff7f50;
+      border-radius: 6px;
+      width: 80%;
+      margin-bottom: 18px;
+      color: #ff4500;
+      background: #fff;
+    }
+
+    #pseudo-modal button {
+      font-size: 17px;
+      padding: 10px 24px;
+      background: linear-gradient(90deg, #ff4500 0%, #ff7f50 100%);
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      box-shadow: 0 2px 8px rgba(255, 69, 0, 0.5);
       margin-top: 8px;
-    ">Entrer</button>
+    }
+
+    @media (max-width: 768px) {
+      header {
+        font-size: 20px;
+        padding: 10px;
+      }
+
+      .tab {
+        padding: 8px 15px;
+        font-size: 14px;
+      }
+
+      #chat-area {
+        font-size: 14px;
+      }
+
+      #bottom-bar {
+        flex-direction: column;
+        gap: 5px;
+      }
+
+      #recipient, #message, #send {
+        width: 100%;
+      }
+
+      #send {
+        padding: 10px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Choix pseudo -->
+<div id="pseudo-modal">
+  <div>
+    <h2>Choisissez votre pseudo</h2>
+    <input id="pseudo-input" type="text" maxlength="24" placeholder="Entrez votre pseudo" />
+    <br>
+    <button id="pseudo-btn">Entrer</button>
   </div>
 </div>
+
+<header>Messagerie</header>
+<div id="tabs"></div>
+<div id="chat-area"></div>
+<div id="bottom-bar">
+  <select id="recipient"><option value="ALL">Général</option></select>
+  <input id="message" placeholder="écrivez votre message" />
+  <button id="send">Envoyer</button>
+</div>
+
 <script>
-  // Remplace le prompt par une interface
+  // 🔐 Redirection HTTPS sauf localhost
+  if (location.protocol !== "https:" && location.hostname !== "localhost") {
+    location.href = "https://" + location.hostname + location.pathname + location.search;
+  }
+
+  // 🔔 Notifications
+  const isSecure = location.protocol === "https:" || location.hostname === "localhost";
+  if ("Notification" in window && isSecure) {
+    if (Notification.permission === "default") {
+      Notification.requestPermission().then(permission => {
+        if (permission !== "granted") {
+          alert("❌ Notifications refusées !");
+        }
+      });
+    }
+  }
+
+  // Interface pseudo
   let pseudo = "";
   document.getElementById("pseudo-btn").onclick = () => {
     const val = document.getElementById("pseudo-input").value.trim();
     if (val.length < 2) {
-      document.getElementById("pseudo-input").focus();
-      document.getElementById("pseudo-input").style.borderColor = "#ff3c00";
+      document.getElementById("pseudo-input").style.borderColor = "red";
       return;
     }
     pseudo = val;
@@ -244,29 +228,9 @@
   document.getElementById("pseudo-input").onkeydown = e => {
     if (e.key === "Enter") document.getElementById("pseudo-btn").click();
   };
+
   function startChat() {
-    // Place ici le code d'initialisation du chat (WebSocket, etc.)
-    window.initChat && window.initChat(pseudo);
-  }
-  // Pour compatibilité avec le script principal
-  window.getPseudo = () => pseudo;
-</script>
-
-<header>Messagerie</header>
-<div id="tabs"></div>
-<div id="chat-area"></div>
-
-<div id="bottom-bar">
-  <select id="recipient">
-    <option value="ALL">Général</option>
-  </select>
-  <input id="message" placeholder="écrivez votre message" />
-  <button id="send">Envoyer</button>
-</div>
-
-<script>
-  window.initChat = function(pseudo) {
-    const ws = new WebSocket("ws://" + location.hostname + ":8080");
+    const ws = new WebSocket((location.protocol === "https:" ? "wss://" : "ws://") + location.hostname + ":8080");
     const tabs = {};
     let currentTab = "ALL";
     const displayed = new Set();
@@ -286,9 +250,7 @@
       for (let line of lines) {
         if (!line.trim()) continue;
         let obj;
-        try {
-          obj = JSON.parse(line);
-        } catch { continue; }
+        try { obj = JSON.parse(line); } catch { continue; }
 
         if (obj.type === 'msg') {
           const timestamp = obj.timestamp || new Date().toLocaleTimeString();
@@ -309,9 +271,7 @@
           }
         }
 
-        else if (obj.type === 'users') {
-          updateUsers(obj.data);
-        }
+        else if (obj.type === 'users') updateUsers(obj.data);
 
         else if (obj.type === 'history') {
           for (let msg of obj.data) {
@@ -322,7 +282,6 @@
             const uid = `${timestamp}_${sender}_${target}_${content}`;
             if (displayed.has(uid)) continue;
             displayed.add(uid);
-            // Ne montrer que si ça me concerne
             if (target === 'ALL' || sender === pseudo || target === pseudo) {
               const tab = target === 'ALL' ? 'ALL' : (sender === pseudo ? target : sender);
               addMessage(tab, `[${timestamp}] ${sender} ➜ ${target === 'ALL' ? 'Tous' : target} : ${content}`);
@@ -330,9 +289,7 @@
           }
         }
 
-        else if (obj.type === 'error') {
-          alert("Erreur : " + obj.msg);
-        }
+        else if (obj.type === 'error') alert("Erreur : " + obj.msg);
       }
     };
 
@@ -351,9 +308,7 @@
 
     function switchTab(tab) {
       currentTab = tab;
-      for (let key in tabs) {
-        tabs[key].div.classList.remove("active");
-      }
+      for (let key in tabs) tabs[key].div.classList.remove("active");
       tabs[tab].div.classList.add("active");
       refreshChat();
       recipientSelect.value = tab === 'ALL' ? 'ALL' : tab;
@@ -366,14 +321,8 @@
 
     function updateUsers(users) {
       users = users.filter(u => u !== pseudo);
-      const old = [...recipientSelect.options].map(o => o.value);
-      const newList = ['ALL', ...users];
-      if (JSON.stringify(old) !== JSON.stringify(newList)) {
-        recipientSelect.innerHTML = '<option value="ALL">Général</option>';
-        users.forEach(u => {
-          recipientSelect.innerHTML += `<option value="${u}">${u}</option>`;
-        });
-      }
+      recipientSelect.innerHTML = '<option value="ALL">Général</option>';
+      users.forEach(u => recipientSelect.innerHTML += `<option value="${u}">${u}</option>`);
     }
 
     sendBtn.onclick = sendMessage;
@@ -389,15 +338,12 @@
       ws.send(JSON.stringify(obj));
       setTimeout(() => { messageInput.value = ''; }, 10);
     }
-    ws.onclose = () => {
-      alert("Connexion perdue. Essayez de rafraîchir la page.");
-    };
 
+    ws.onclose = () => alert("Connexion perdue. Rafraîchissez la page.");
     addMessage("ALL", `Bienvenue ${pseudo} !`);
-    addMessage("ALL", "les messages ne peuvent pas être supprimés ou modifiés.");
+    addMessage("ALL", "Les messages ne peuvent pas être supprimés ou modifiés.");
     switchTab("ALL");
-  };
+  }
 </script>
-
 </body>
 </html>
